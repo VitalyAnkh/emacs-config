@@ -76,33 +76,33 @@ jobs:
         if: github.event_name != 'schedule' || steps.doomcache.outputs.cache-hit != 'true'
         run: runner "emacs --batch --eval \"(progn (load \\\"~/.config/emacs/lisp/doom.el\\\") (require 'doom-cli) (doom-initialize-packages) (load \\\"~/.config/doom/subconf/ox-latex-emoji.el\\\") (unless (file-exists-p (expand-file-name \\\"twemoji\\\" org-latex-emoji-base-dir)) (org-latex-emoji-install \\\"twemoji\\\" t)))\""
 
-      - name: Export config
-        if: github.event_name != 'schedule' || steps.doomcache.outputs.cache-hit != 'true'
-        run: runner 'cd ~/.config/doom/misc/config-publishing && ./publish.sh'
+      # - name: Export config
+      #   if: github.event_name != 'schedule' || steps.doomcache.outputs.cache-hit != 'true'
+      #   run: runner 'cd ~/.config/doom/misc/config-publishing && ./publish.sh'
 
-      - name: Push results
-        if: (github.event_name != 'schedule' || steps.doomcache.outputs.cache-hit != 'true') && success()
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: /home/runner/.config/doom/publish
-          publish_branch: publish
-          force_orphan: true
+      # - name: Push results
+      #   if: (github.event_name != 'schedule' || steps.doomcache.outputs.cache-hit != 'true') && success()
+      #   uses: peaceiris/actions-gh-pages@v3
+      #   with:
+      #     github_token: ${{ secrets.GITHUB_TOKEN }}
+      #     publish_dir: /home/runner/.config/doom/publish
+      #     publish_branch: publish
+      #     force_orphan: true
 
-      - name: Setup Pages
-        if: (github.event_name != 'schedule' || steps.doomcache.outputs.cache-hit != 'true') && success()
-        uses: actions/configure-pages@v4
+      # - name: Setup Pages
+      #   if: (github.event_name != 'schedule' || steps.doomcache.outputs.cache-hit != 'true') && success()
+      #   uses: actions/configure-pages@v4
 
-      - name: Upload artifact
-        if: (github.event_name != 'schedule' || steps.doomcache.outputs.cache-hit != 'true') && success()
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: '/home/runner/.config/doom/publish'
+      # - name: Upload artifact
+      #   if: (github.event_name != 'schedule' || steps.doomcache.outputs.cache-hit != 'true') && success()
+      #   uses: actions/upload-pages-artifact@v3
+      #   with:
+      #     path: '/home/runner/.config/doom/publish'
 
-      - name: Deploy to GitHub Pages
-        if: (github.event_name != 'schedule' || steps.doomcache.outputs.cache-hit != 'true') && success()
-        id: deployment
-        uses: actions/deploy-pages@v4
+      # - name: Deploy to GitHub Pages
+      #   if: (github.event_name != 'schedule' || steps.doomcache.outputs.cache-hit != 'true') && success()
+      #   id: deployment
+      #   uses: actions/deploy-pages@v4
 
       - name: Debug over SSH (tmate)
         if: ${{ !cancelled() && github.event_name == 'workflow_dispatch' && inputs.tmate_enabled }}
