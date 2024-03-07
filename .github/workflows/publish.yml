@@ -9,7 +9,7 @@ on:
       tmate_enabled:
         type: boolean
         description: 'Run a tmate session'
-        required: false
+        required: true
         default: true
   schedule:
     - cron: "0 */2 * * *" # every 2h
@@ -105,5 +105,5 @@ jobs:
         uses: actions/deploy-pages@v4
 
       - name: Debug over SSH (tmate)
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.tmate_enabled }}
+        if: ${{ !cancelled() && github.event_name == 'workflow_dispatch' && inputs.tmate_enabled }}
         uses: mxschmitt/action-tmate@v3
