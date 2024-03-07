@@ -43,3 +43,6 @@
 [submodule "conf-data-toml"]
 	path = lisp/conf-data-toml
 	url = https://code.tecosaur.net/tec/conf-data-toml.git
+[submodule "lisp/mpris"]
+	path = lisp/mpris
+	url = https://code.tecosaur.net/tec/mpris.el.git

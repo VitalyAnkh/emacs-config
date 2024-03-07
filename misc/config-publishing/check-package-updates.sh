@@ -1,13 +1,24 @@
 #!/usr/bin/env sh
 ":"; exec emacs --quick --script "$0" -- "$@" # -*- mode: emacs-lisp; lexical-binding: t; -*-
+(setq start-time (float-time)
+      exit-code 0)
 
-(setq log-file (expand-file-name (format "%s-log.txt" (file-name-base load-file-name)))
-      log-messages nil)
+(defvar script-root default-directory)
+(defvar config-root (file-name-directory ; $DOOM_DIR/
+                     (directory-file-name
+                      (file-name-directory ; $DOOM_DIR/misc
+                       (directory-file-name
+                        (file-name-directory load-file-name))))))
 
-(load (expand-file-name "initialise.el" (file-name-directory load-file-name)) nil t)
-(initialise)
+(defvar log-file "unnamed-log.txt")
 
-(autoload #'sp-point-in-string "smartparens")
+(write-region "" nil log-file)
+
+(setq gc-cons-threshold 16777216
+          gcmh-high-cons-threshold 16777216)
+    (load (expand-file-name "core/core.el" user-emacs-directory) nil t)
+    (require 'core-cli)
+    (doom-initialize)
 
 (defcli! check-updates ()
 
@@ -67,7 +78,7 @@
                                    (equal oldid id))
                         (let ((default-directory
                                 (or (when (plist-member recipe :local-repo)
-                                      (doom-glob doom-private-dir (plist-get recipe :local-repo)))
+                                      (expand-file-name (plist-get recipe :local-repo) doom-private-dir))
                                     (straight--repos-dir
                                      (file-name-sans-extension
                                       (file-name-nondirectory url))))))
@@ -91,19 +102,44 @@
               (t
                (setq upgradeable-packages (1+ upgradeable-packages))
                (message "%s: %s → %s\n%s"
-                       package
-                       (substring oldid 0 10)
-                       (substring id 0 10)
-                       commits))))))
+                        package
+                        (substring oldid 0 10)
+                        (substring id 0 10)
+                        commits))))))
 
   ;;; Do it
 
   (message "[34] Opening package file")
 
+  (setq packages nil)
+  (defun doom/bump-packages-in-buffer (&optional select)
+    "Inserts or updates a `:pin' for the `package!' statement at point.
+Grabs the latest commit id of the package using 'git'."
+    (interactive "P")
+    (save-excursion
+      (goto-char (point-min))
+      (doom-initialize-packages)
+      (while (search-forward "(package! " nil t)
+        (unless (let ((ppss (syntax-ppss)))
+                  (or (nth 4 ppss)
+                      (nth 3 ppss)
+                      (save-excursion
+                        (and (goto-char (match-beginning 0))
+                             (not (plist-member (sexp-at-point) :pin))))))
+          (condition-case e
+              (push (doom/bump-package-at-point) packages)
+            (user-error (message "%s" (error-message-string e))))
+          (message "\npackage: %S\n" packages)))
+      (if packages
+          (message "Updated %d packages\n- %s" (length packages) (string-join packages "\n- "))
+        (message "No packages to update"))))
+
   (with-temp-buffer
     (insert-file-contents (expand-file-name "packages.el" config-root))
     (message "[34] Checking for updates")
-    (setq package-upgrades (doom/bump-packages-in-buffer))
+    (doom/bump-packages-in-buffer)
+    (pp packages)
+    (setq package-upgrades "")
     (goto-char (point-min))
     (setq total-packages 0)
     (while (search-forward "(package!" nil t)
